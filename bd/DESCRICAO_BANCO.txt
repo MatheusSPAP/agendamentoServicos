@@ -1,0 +1,42 @@
+Este documento descreve a estrutura do banco de dados 'agendamento_servicos'.
+
+O banco de dados é composto pelas seguintes tabelas:
+
+1.  `usuarios`:
+    *   Armazena as informações dos utilizadores da aplicação.
+    *   `id`: Identificador único do utilizador.
+    *   `nome`, `email`, `senha`, `telefone`: Dados pessoais e de login.
+    *   `tipo`: Define se o utilizador é um 'cliente' ou 'admin', controlando os seus níveis de acesso.
+
+2.  `servicos`:
+    *   Regista os serviços oferecidos pelo salão.
+    *   `id`: Identificador único do serviço.
+    *   `nome`, `descricao`: Detalhes do serviço.
+    *   `duracao_minutos`: Tempo estimado para a realização do serviço.
+    *   `preco`: Custo do serviço.
+
+3.  `profissionais`:
+    *   Armazena os dados dos profissionais que trabalham no salão.
+    *   `id`: Identificador único do profissional.
+    *   `nome`, `especialidade`: Nome e área de especialização do profissional.
+
+4.  `profissionais_servicos`:
+    *   Tabela de ligação (relação muitos-para-muitos).
+    *   Associa os profissionais aos serviços que eles estão aptos a realizar.
+    *   Garante que um cliente só pode agendar um serviço com um profissional que o ofereça.
+
+5.  `horarios_trabalho`:
+    *   Define a jornada de trabalho de cada profissional.
+    *   `id`: Identificador único do registo de horário.
+    *   `profissional_id`: Associa o horário a um profissional.
+    *   `dia_semana`, `hora_inicio`, `hora_fim`: Especifica os dias e horas em que o profissional está disponível.
+
+6.  `agendamentos`:
+    *   Tabela principal que armazena os agendamentos feitos pelos clientes.
+    *   `id`: Identificador único do agendamento.
+    *   `cliente_id`, `profissional_id`, `servico_id`: Chaves estrangeiras que ligam o agendamento ao cliente, profissional e serviço correspondentes.
+    *   `data_hora`: A data e hora exatas do agendamento.
+    *   `status`: Indica o estado atual do agendamento ('agendado', 'cancelado', 'concluido').
+
+Índices:
+*   Foram criados índices na tabela `agendamentos` para as colunas `cliente_id`, `profissional_id`, `servico_id` e `data_hora`. Estes índices são essenciais para otimizar a velocidade das pesquisas e garantir um bom desempenho da aplicação à medida que o número de agendamentos aumenta.
