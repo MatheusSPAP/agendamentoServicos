@@ -16,7 +16,11 @@ const usuarioDb = {
 
     findById: async (id) => {
         const [rows] = await pool.query('SELECT * FROM usuarios WHERE id = ?', [id]);
-        return rows[0];
+        if (rows.length === 0) {
+            return null;
+        }
+        const row = rows[0];
+        return row;
     }
 };
 

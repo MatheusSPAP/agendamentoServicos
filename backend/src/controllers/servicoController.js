@@ -1,4 +1,5 @@
-const servicoDb = require('../db/servicoDb'); // Import the new DAO
+const servicoDb = require('../db/servicoDb');
+const Servico = require('../models/servico');
 
 const servicoController = {
     createServico: async (req, res) => {
@@ -7,8 +8,10 @@ const servicoController = {
             return res.status(400).json({ error: 'Nome, duração e preço são obrigatórios.' });
         }
         try {
-            const result = await servicoDb.create(nome, descricao, duracao_minutos, preco);
-            res.status(201).json({ id: result.insertId, ...req.body });
+            const newServico = new Servico(null, nome, descricao, duracao_minutos, preco);
+            const result = await servicoDb.create(newServico);
+            newServico.id = result.insertId;
+            res.status(201).json(newServico);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao criar o serviço.' });
@@ -27,11 +30,11 @@ const servicoController = {
 
     getServicoById: async (req, res) => {
         try {
-            const servicos = await servicoDb.findById(req.params.id);
-            if (servicos.length === 0) {
+            const servico = await servicoDb.findById(req.params.id);
+            if (!servico) {
                 return res.status(404).json({ error: 'Serviço não encontrado.' });
             }
-            res.json(servicos[0]);
+            res.json(servico);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao buscar o serviço.' });
@@ -41,11 +44,12 @@ const servicoController = {
     updateServico: async (req, res) => {
         const { nome, descricao, duracao_minutos, preco } = req.body;
         try {
-            const result = await servicoDb.update(req.params.id, nome, descricao, duracao_minutos, preco);
+            const updatedServico = new Servico(req.params.id, nome, descricao, duracao_minutos, preco);
+            const result = await servicoDb.update(req.params.id, updatedServico);
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Serviço não encontrado.' });
             }
-            res.json({ id: req.params.id, ...req.body });
+            res.json(updatedServico);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao atualizar o serviço.' });

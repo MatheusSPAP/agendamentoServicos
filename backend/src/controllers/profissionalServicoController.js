@@ -1,4 +1,5 @@
-const profissionalServicoDb = require('../db/profissionalServicoDb'); // Import the new DAO
+const profissionalServicoDb = require('../db/profissionalServicoDb');
+const ProfissionalServico = require('../models/profissionalServico');
 
 const profissionalServicoController = {
     assignServiceToProfissional: async (req, res) => {
@@ -7,7 +8,8 @@ const profissionalServicoController = {
             return res.status(400).json({ error: 'ID do profissional e do serviço são obrigatórios.' });
         }
         try {
-            await profissionalServicoDb.assign(profissional_id, servico_id);
+            const newProfissionalServico = new ProfissionalServico(profissional_id, servico_id);
+            await profissionalServicoDb.assign(newProfissionalServico);
             res.status(201).json({ message: 'Associação criada com sucesso.' });
         } catch (error) {
             if (error.code === 'ER_DUP_ENTRY') {
@@ -24,7 +26,8 @@ const profissionalServicoController = {
             return res.status(400).json({ error: 'ID do profissional e do serviço são obrigatórios.' });
         }
         try {
-            const result = await profissionalServicoDb.unassign(profissional_id, servico_id);
+            const profissionalServicoToDelete = new ProfissionalServico(profissional_id, servico_id);
+            const result = await profissionalServicoDb.unassign(profissionalServicoToDelete);
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Associação não encontrada.' });
             }

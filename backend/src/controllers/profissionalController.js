@@ -1,4 +1,5 @@
-const profissionalDb = require('../db/profissionalDb'); // Import the new DAO
+const profissionalDb = require('../db/profissionalDb');
+const Profissional = require('../models/profissional');
 
 const profissionalController = {
     createProfissional: async (req, res) => {
@@ -7,8 +8,10 @@ const profissionalController = {
             return res.status(400).json({ error: 'O nome é obrigatório.' });
         }
         try {
-            const result = await profissionalDb.create(nome, especialidade);
-            res.status(201).json({ id: result.insertId, ...req.body });
+            const newProfissional = new Profissional(null, nome, especialidade);
+            const result = await profissionalDb.create(newProfissional);
+            newProfissional.id = result.insertId;
+            res.status(201).json(newProfissional);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao criar o profissional.' });
@@ -27,11 +30,11 @@ const profissionalController = {
 
     getProfissionalById: async (req, res) => {
         try {
-            const profissionais = await profissionalDb.findById(req.params.id);
-            if (profissionais.length === 0) {
+            const profissional = await profissionalDb.findById(req.params.id);
+            if (!profissional) {
                 return res.status(404).json({ error: 'Profissional não encontrado.' });
             }
-            res.json(profissionais[0]);
+            res.json(profissional);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao buscar o profissional.' });
@@ -41,11 +44,12 @@ const profissionalController = {
     updateProfissional: async (req, res) => {
         const { nome, especialidade } = req.body;
         try {
-            const result = await profissionalDb.update(req.params.id, nome, especialidade);
+            const updatedProfissional = new Profissional(req.params.id, nome, especialidade);
+            const result = await profissionalDb.update(req.params.id, updatedProfissional);
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Profissional não encontrado.' });
             }
-            res.json({ id: req.params.id, ...req.body });
+            res.json(updatedProfissional);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao atualizar o profissional.' });

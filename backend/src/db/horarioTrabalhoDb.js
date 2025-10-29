@@ -1,7 +1,9 @@
 const pool = require('./dbConfig');
+const HorarioTrabalho = require('../models/horarioTrabalho');
 
 const horarioTrabalhoDb = {
-    create: async (profissional_id, dia_semana, hora_inicio, hora_fim) => {
+    create: async (horarioTrabalho) => {
+        const { profissional_id, dia_semana, hora_inicio, hora_fim } = horarioTrabalho;
         const [result] = await pool.query(
             'INSERT INTO horarios_trabalho (profissional_id, dia_semana, hora_inicio, hora_fim) VALUES (?, ?, ?, ?)',
             [profissional_id, dia_semana, hora_inicio, hora_fim]
@@ -17,15 +19,20 @@ const horarioTrabalhoDb = {
             params.push(profissional_id);
         }
         const [rows] = await pool.query(query, params);
-        return rows;
+        return rows.map(row => new HorarioTrabalho(row.id, row.profissional_id, row.dia_semana, row.hora_inicio, row.hora_fim));
     },
 
     findById: async (id) => {
         const [rows] = await pool.query('SELECT * FROM horarios_trabalho WHERE id = ?', [id]);
-        return rows;
+        if (rows.length === 0) {
+            return null;
+        }
+        const row = rows[0];
+        return new HorarioTrabalho(row.id, row.profissional_id, row.dia_semana, row.hora_inicio, row.hora_fim);
     },
 
-    update: async (id, profissional_id, dia_semana, hora_inicio, hora_fim) => {
+    update: async (id, horarioTrabalho) => {
+        const { profissional_id, dia_semana, hora_inicio, hora_fim } = horarioTrabalho;
         const [result] = await pool.query(
             'UPDATE horarios_trabalho SET profissional_id = ?, dia_semana = ?, hora_inicio = ?, hora_fim = ? WHERE id = ?',
             [profissional_id, dia_semana, hora_inicio, hora_fim, id]

@@ -1,4 +1,5 @@
-const horarioTrabalhoDb = require('../db/horarioTrabalhoDb'); // Import the new DAO
+const horarioTrabalhoDb = require('../db/horarioTrabalhoDb');
+const HorarioTrabalho = require('../models/horarioTrabalho');
 
 const horarioTrabalhoController = {
     createHorario: async (req, res) => {
@@ -7,8 +8,10 @@ const horarioTrabalhoController = {
             return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
         }
         try {
-            const result = await horarioTrabalhoDb.create(profissional_id, dia_semana, hora_inicio, hora_fim);
-            res.status(201).json({ id: result.insertId, ...req.body });
+            const newHorario = new HorarioTrabalho(null, profissional_id, dia_semana, hora_inicio, hora_fim);
+            const result = await horarioTrabalhoDb.create(newHorario);
+            newHorario.id = result.insertId;
+            res.status(201).json(newHorario);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao criar o horário de trabalho.' });
@@ -28,11 +31,11 @@ const horarioTrabalhoController = {
 
     getHorarioById: async (req, res) => {
         try {
-            const horarios = await horarioTrabalhoDb.findById(req.params.id);
-            if (horarios.length === 0) {
+            const horario = await horarioTrabalhoDb.findById(req.params.id);
+            if (!horario) {
                 return res.status(404).json({ error: 'Horário de trabalho não encontrado.' });
             }
-            res.json(horarios[0]);
+            res.json(horario);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao buscar o horário de trabalho.' });
@@ -42,11 +45,12 @@ const horarioTrabalhoController = {
     updateHorario: async (req, res) => {
         const { profissional_id, dia_semana, hora_inicio, hora_fim } = req.body;
         try {
-            const result = await horarioTrabalhoDb.update(req.params.id, profissional_id, dia_semana, hora_inicio, hora_fim);
+            const updatedHorario = new HorarioTrabalho(req.params.id, profissional_id, dia_semana, hora_inicio, hora_fim);
+            const result = await horarioTrabalhoDb.update(req.params.id, updatedHorario);
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Horário de trabalho não encontrado.' });
             }
-            res.json({ id: req.params.id, ...req.body });
+            res.json(updatedHorario);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao atualizar o horário de trabalho.' });

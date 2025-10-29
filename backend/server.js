@@ -29,6 +29,9 @@ app.use('/api/horarios-trabalho', horarioTrabalhoRoutes);
 const agendamentoRoutes = require('./src/routes/agendamentoRoutes');
 app.use('/api/agendamentos', agendamentoRoutes);
 
+const systemRoutes = require('./src/routes/systemRoutes');
+app.use('/api/system', systemRoutes);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);

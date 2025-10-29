@@ -1,47 +1,38 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const usuarioDb = require('../db/usuarioDb'); // Import the new DAO
+const usuarioDb = require('../db/usuarioDb');
+const Usuario = require('../models/usuario');
 
 const usuarioController = {
     register: async (req, res) => {
-        // O campo 'tipo' é removido do body para segurança.
-        // O valor padrão no banco de dados será 'cliente'.
         const { nome, email, senha, telefone } = req.body;
 
-        if (!nome || !email || !senha) {
-            return res.status(400).json({ error: 'Nome, email e senha são obrigatórios.' });
+        const errors = Usuario.validate(req.body);
+        if (errors.length > 0) {
+            return res.status(400).json({ errors });
         }
 
         try {
-            // Verificar se o email já existe
-            const users = await usuarioDb.findByEmail(email);
-            if (users.length > 0) {
+            const existingUsers = await usuarioDb.findByEmail(email);
+            if (existingUsers.length > 0) {
                 return res.status(400).json({ error: 'Este email já está em uso.' });
             }
 
-            // Hash da senha
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(senha, salt);
 
-            // Inserir usuário no banco. O 'tipo' será 'cliente' por padrão.
-            const result = await usuarioDb.create(nome, email, hashedPassword, telefone);
+            const result = await usuarioDb.create(nome, email, hashedPassword, telefone, 'cliente');
 
-            // Retornar o novo usuário criado (sem a senha)
-            const newUser = {
-                id: result.insertId,
-                nome,
-                email,
-                telefone,
-                tipo: 'cliente' // Explicitamente informa o tipo no retorno
-            };
+            const newUser = new Usuario(result.insertId, nome, email, null, telefone, 'cliente');
 
-            res.status(201).json(newUser);
+            res.status(201).json(newUser.toPublic());
 
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao registrar o usuário.' });
         }
     },
+
     login: async (req, res) => {
         const { email, senha } = req.body;
 
@@ -50,28 +41,26 @@ const usuarioController = {
         }
 
         try {
-            // Encontrar usuário pelo email
             const users = await usuarioDb.findByEmail(email);
             if (users.length === 0) {
                 return res.status(404).json({ error: 'Usuário não encontrado.' });
             }
 
-            const user = users[0];
+            const userRaw = users[0];
+            const userInstance = Usuario.fromDatabase(userRaw);
 
-            // Comparar senhas
-            const isMatch = await bcrypt.compare(senha, user.senha);
+            const isMatch = await bcrypt.compare(senha, userInstance.senha);
             if (!isMatch) {
                 return res.status(400).json({ error: 'Credenciais inválidas.' });
             }
 
-            // Gerar token JWT
             const payload = {
-                id: user.id,
-                nome: user.nome,
-                tipo: user.tipo
+                id: userInstance.id,
+                nome: userInstance.nome,
+                tipo: userInstance.tipo
             };
 
-            const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
 
             res.json({ token });
 
@@ -80,37 +69,29 @@ const usuarioController = {
             res.status(500).json({ error: 'Erro ao fazer login.' });
         }
     },
+
     createAdmin: async (req, res) => {
-        // Esta é uma rota protegida, então já sabemos que o requisitante é um admin.
         const { nome, email, senha, telefone } = req.body;
 
-        if (!nome || !email || !senha) {
-            return res.status(400).json({ error: 'Nome, email e senha são obrigatórios.' });
+        const errors = Usuario.validate(req.body);
+        if (errors.length > 0) {
+            return res.status(400).json({ errors });
         }
 
         try {
-            // Verificar se o email já existe
-            const users = await usuarioDb.findByEmail(email);
-            if (users.length > 0) {
+            const existingUsers = await usuarioDb.findByEmail(email);
+            if (existingUsers.length > 0) {
                 return res.status(400).json({ error: 'Este email já está em uso.' });
             }
 
-            // Hash da senha
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(senha, salt);
 
-            // Inserir usuário no banco com o tipo 'admin'
             const result = await usuarioDb.create(nome, email, hashedPassword, telefone, 'admin');
 
-            const newAdmin = {
-                id: result.insertId,
-                nome,
-                email,
-                telefone,
-                tipo: 'admin'
-            };
+            const newAdmin = new Usuario(result.insertId, nome, email, null, telefone, 'admin');
 
-            res.status(201).json(newAdmin);
+            res.status(201).json(newAdmin.toPublic());
 
         } catch (error) {
             console.error(error);

@@ -1,8 +1,9 @@
 const agendamentoDb = require('../db/agendamentoDb');
 const servicoDb = require('../db/servicoDb');
-const profissionalDb = require('../db/profissionalDb'); // Not directly used in controller, but good to have if needed
+const profissionalDb = require('../db/profissionalDb');
 const horarioTrabalhoDb = require('../db/horarioTrabalhoDb');
 const profissionalServicoDb = require('../db/profissionalServicoDb');
+const Agendamento = require('../models/agendamento');
 
 const agendamentoController = {
     // @desc    Obter horários disponíveis
@@ -17,11 +18,11 @@ const agendamentoController = {
 
         try {
             // 1. Obter detalhes do serviço
-            const servicos = await servicoDb.findById(servico_id);
-            if (servicos.length === 0) {
+            const servico = await servicoDb.findById(servico_id);
+            if (!servico) {
                 return res.status(404).json({ error: 'Serviço não encontrado.' });
             }
-            const duracaoServico = servicos[0].duracao_minutos;
+            const duracaoServico = servico.duracao_minutos;
 
             let profissionaisDisponiveis = [];
 
@@ -72,7 +73,7 @@ const agendamentoController = {
                     for (const agendamento of agendamentosExistentes) {
                         const agendamentoInicio = new Date(agendamento.data_hora);
                         const agendamentoServico = await servicoDb.findById(agendamento.servico_id);
-                        const agendamentoFim = new Date(agendamentoInicio.getTime() + agendamentoServico[0].duracao_minutos * 60 * 1000);
+                        const agendamentoFim = new Date(agendamentoInicio.getTime() + agendamentoServico.duracao_minutos * 60 * 1000);
 
                         // Conflito se os horários se sobrepõem
                         if (
@@ -117,15 +118,29 @@ const agendamentoController = {
         }
 
         try {
-            const servicos = await servicoDb.findById(servico_id);
-            if (servicos.length === 0) {
+            const servico = await servicoDb.findById(servico_id);
+            if (!servico) {
                 return res.status(404).json({ error: 'Serviço não encontrado.' });
             }
-            const duracaoServico = servicos[0].duracao_minutos;
+            const duracaoServico = servico.duracao_minutos;
             const agendamentoInicio = new Date(data_hora);
+            
+            // Validação: não permitir agendamentos para datas passadas
+            const agora = new Date();
+            if (agendamentoInicio < agora) {
+                return res.status(400).json({ error: 'Não é possível agendar para uma data/hora passada.' });
+            }
+            
+            // Validação: não permitir agendamentos muito distantes no futuro (ex: mais de 2 meses)
+            const doisMesesAPartirDeAgora = new Date();
+            doisMesesAPartirDeAgora.setMonth(agora.getMonth() + 2);
+            if (agendamentoInicio > doisMesesAPartirDeAgora) {
+                return res.status(400).json({ error: 'Não é possível agendar com mais de 2 meses de antecedência.' });
+            }
+            
             const agendamentoFim = new Date(agendamentoInicio.getTime() + duracaoServico * 60 * 1000);
 
-            const conflitos = await agendamentoDb.findConflictingAppointments(profissional_id, agendamentoFim, agendamentoInicio);
+            const conflitos = await agendamentoDb.findConflictingAppointments(profissional_id, agendamentoInicio, agendamentoFim);
 
             if (conflitos.length > 0) {
                 return res.status(409).json({ error: 'Horário indisponível. Conflito com outro agendamento.' });
@@ -133,8 +148,10 @@ const agendamentoController = {
 
             const formattedDataHora = new Date(data_hora).toISOString().slice(0, 19).replace('T', ' ');
 
-            const result = await agendamentoDb.create(cliente_id, profissional_id, servico_id, formattedDataHora, 'agendado');
-            res.status(201).json({ id: result.insertId, cliente_id, profissional_id, servico_id, data_hora: formattedDataHora, status: 'agendado' });
+            const newAgendamento = new Agendamento(null, cliente_id, profissional_id, servico_id, formattedDataHora, 'agendado');
+            const result = await agendamentoDb.create(newAgendamento);
+            newAgendamento.id = result.insertId;
+            res.status(201).json(newAgendamento);
 
         } catch (error) {
             console.error(error);
@@ -147,7 +164,22 @@ const agendamentoController = {
     // @access  Private (Cliente ou Admin)
     getAgendamentos: async (req, res) => {
         try {
-            const agendamentos = await agendamentoDb.findAll(req.user.tipo === 'cliente' ? req.user.id : null);
+            // Parâmetros de filtro e paginação
+            const { status, data_inicio, data_fim, page = 1, limit = 10 } = req.query;
+            
+            // Calcular offset para paginação
+            const offset = (page - 1) * limit;
+            
+            // Obter agendamentos com filtros
+            const agendamentos = await agendamentoDb.findAllWithFilters(
+                req.user.tipo === 'cliente' ? req.user.id : null,
+                status,
+                data_inicio,
+                data_fim,
+                offset,
+                limit
+            );
+            
             res.json(agendamentos);
         } catch (error) {
             console.error(error);
@@ -160,17 +192,17 @@ const agendamentoController = {
     // @access  Private (Cliente ou Admin)
     getAgendamentoById: async (req, res) => {
         try {
-            const agendamentos = await agendamentoDb.findById(req.params.id);
-            if (agendamentos.length === 0) {
+            const agendamento = await agendamentoDb.findById(req.params.id);
+            if (!agendamento) {
                 return res.status(404).json({ error: 'Agendamento não encontrado.' });
             }
 
             // Se for cliente, verificar se é o próprio agendamento
-            if (req.user.tipo === 'cliente' && agendamentos[0].cliente_id !== req.user.id) {
+            if (req.user.tipo === 'cliente' && agendamento.cliente_id !== req.user.id) {
                 return res.status(403).json({ error: 'Acesso negado.' });
             }
 
-            res.json(agendamentos[0]);
+            res.json(agendamento);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao buscar agendamento.' });
@@ -187,11 +219,24 @@ const agendamentoController = {
                 return res.status(403).json({ error: 'Acesso negado. Somente administradores podem atualizar agendamentos.' });
             }
 
-            const result = await agendamentoDb.update(req.params.id, profissional_id, servico_id, data_hora, status);
+            const existingAgendamento = await agendamentoDb.findById(req.params.id);
+            if (!existingAgendamento) {
+                return res.status(404).json({ error: 'Agendamento não encontrado.' });
+            }
+            
+            const updatedAgendamento = new Agendamento(
+                req.params.id, 
+                existingAgendamento.cliente_id, 
+                profissional_id || existingAgendamento.profissional_id,
+                servico_id || existingAgendamento.servico_id,
+                data_hora || existingAgendamento.data_hora,
+                status || existingAgendamento.status
+            );
+            const result = await agendamentoDb.update(req.params.id, updatedAgendamento);
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Agendamento não encontrado.' });
             }
-            res.json({ id: req.params.id, ...req.body });
+            res.json(updatedAgendamento);
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao atualizar agendamento.' });
@@ -200,9 +245,31 @@ const agendamentoController = {
 
     // @desc    Cancelar agendamento
     // @route   DELETE /api/agendamentos/:id
+    // @route   DELETE /api/agendamentos/:id
     // @access  Private (Cliente ou Admin)
     cancelAgendamento: async (req, res) => {
         try {
+            // Obter informações do agendamento para verificar a política de cancelamento
+            const agendamento = await agendamentoDb.findById(req.params.id);
+            if (!agendamento) {
+                return res.status(404).json({ error: 'Agendamento não encontrado.' });
+            }
+            
+            // Verificar se o usuário tem permissão para cancelar
+            if (req.user.tipo === 'cliente' && agendamento.cliente_id !== req.user.id) {
+                return res.status(403).json({ error: 'Acesso negado. Você não pode cancelar este agendamento.' });
+            }
+            
+            // Verificar política de cancelamento (não pode cancelar com menos de 24h de antecedência, exceto para admins)
+            const dataAgendamento = new Date(agendamento.data_hora);
+            const agora = new Date();
+            const horasDeAntecedencia = (dataAgendamento - agora) / (1000 * 60 * 60); // diferença em horas
+            
+            // Se for cliente e tentar cancelar com menos de 24h de antecedência
+            if (req.user.tipo === 'cliente' && horasDeAntecedencia < 24) {
+                return res.status(400).json({ error: 'Não é possível cancelar o agendamento com menos de 24 horas de antecedência.' });
+            }
+            
             const result = await agendamentoDb.cancel(req.params.id, req.user.tipo === 'cliente' ? req.user.id : null);
             if (result.affectedRows === 0) {
                 return res.status(404).json({ error: 'Agendamento não encontrado ou não autorizado para cancelar.' });

@@ -1,7 +1,11 @@
 const pool = require('./dbConfig');
+const ProfissionalServico = require('../models/profissionalServico');
+const Servico = require('../models/servico');
+const Profissional = require('../models/profissional');
 
 const profissionalServicoDb = {
-    assign: async (profissional_id, servico_id) => {
+    assign: async (profissionalServico) => {
+        const { profissional_id, servico_id } = profissionalServico;
         const [result] = await pool.query(
             'INSERT INTO profissionais_servicos (profissional_id, servico_id) VALUES (?, ?)',
             [profissional_id, servico_id]
@@ -9,7 +13,8 @@ const profissionalServicoDb = {
         return result;
     },
 
-    unassign: async (profissional_id, servico_id) => {
+    unassign: async (profissionalServico) => {
+        const { profissional_id, servico_id } = profissionalServico;
         const [result] = await pool.query(
             'DELETE FROM profissionais_servicos WHERE profissional_id = ? AND servico_id = ?',
             [profissional_id, servico_id]
@@ -25,7 +30,7 @@ const profissionalServicoDb = {
              WHERE ps.profissional_id = ?`,
             [profissional_id]
         );
-        return rows;
+        return rows.map(row => new Servico(row.id, row.nome, row.descricao, row.duracao_minutos, row.preco));
     },
 
     getProfissionaisByService: async (servico_id) => {
@@ -36,7 +41,7 @@ const profissionalServicoDb = {
              WHERE ps.servico_id = ?`,
             [servico_id]
         );
-        return rows;
+        return rows.map(row => new Profissional(row.id, row.nome, row.especialidade));
     }
 };
 

@@ -1,7 +1,9 @@
 const pool = require('./dbConfig');
+const Servico = require('../models/servico');
 
 const servicoDb = {
-    create: async (nome, descricao, duracao_minutos, preco) => {
+    create: async (servico) => {
+        const { nome, descricao, duracao_minutos, preco } = servico;
         const [result] = await pool.query(
             'INSERT INTO servicos (nome, descricao, duracao_minutos, preco) VALUES (?, ?, ?, ?)',
             [nome, descricao, duracao_minutos, preco]
@@ -11,15 +13,20 @@ const servicoDb = {
 
     findAll: async () => {
         const [rows] = await pool.query('SELECT * FROM servicos');
-        return rows;
+        return rows.map(row => new Servico(row.id, row.nome, row.descricao, row.duracao_minutos, row.preco));
     },
 
     findById: async (id) => {
         const [rows] = await pool.query('SELECT * FROM servicos WHERE id = ?', [id]);
-        return rows;
+        if (rows.length === 0) {
+            return null;
+        }
+        const row = rows[0];
+        return new Servico(row.id, row.nome, row.descricao, row.duracao_minutos, row.preco);
     },
 
-    update: async (id, nome, descricao, duracao_minutos, preco) => {
+    update: async (id, servico) => {
+        const { nome, descricao, duracao_minutos, preco } = servico;
         const [result] = await pool.query(
             'UPDATE servicos SET nome = ?, descricao = ?, duracao_minutos = ?, preco = ? WHERE id = ?',
             [nome, descricao, duracao_minutos, preco, id]
