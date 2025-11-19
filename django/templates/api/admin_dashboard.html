@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Administrativo - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <h1 class="h3 mb-4">Dashboard Administrativo</h1>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-3">
+    <div class="card text-white bg-primary mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Total de Serviços</h5>
+        <p class="card-text display-4">{{ total_servicos }}</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card text-white bg-success mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Total de Profissionais</h5>
+        <p class="card-text display-4">{{ total_profissionais }}</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card text-white bg-info mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Total de Agendamentos</h5>
+        <p class="card-text display-4">{{ total_agendamentos }}</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card text-white bg-warning mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Total de Clientes</h5>
+        <p class="card-text display-4">{{ total_clientes }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-12">
+    <h2 class="h4 mb-3">Ações Administrativas</h2>
+    <div class="list-group">
+      <a href="{% url 'web:admin-servicos' %}" class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1">Gerenciar Serviços</h5>
+          <small>Adicionar, editar ou remover serviços</small>
+        </div>
+      </a>
+      <a href="{% url 'web:admin-profissionais' %}" class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1">Gerenciar Profissionais</h5>
+          <small>Adicionar, editar ou remover profissionais</small>
+        </div>
+      </a>
+      <a href="{% url 'web:admin-agendamentos' %}" class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1">Gerenciar Agendamentos</h5>
+          <small>Visualizar e controlar todos os agendamentos</small>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -14,16 +14,61 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          {% if user.is_authenticated %}
+            {% if user.tipo == 'admin' %}
+              <!-- Menu para administradores -->
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'web:admin-dashboard' %}">Dashboard Admin</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'web:admin-servicos' %}">Gerenciar Serviços</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'web:admin-profissionais' %}">Gerenciar Profissionais</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'web:admin-agendamentos' %}">Gerenciar Agendamentos</a>
+              </li>
+            {% else %}
+              <!-- Menu para clientes -->
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'web:servico-list' %}">Serviços</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'web:profissional-list' %}">Profissionais</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Meus Agendamentos</a>
+              </li>
+            {% endif %}
+          {% else %}
+            <!-- Menu para usuários não autenticados -->
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'web:servico-list' %}">Serviços</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'web:profissional-list' %}">Profissionais</a>
+            </li>
+          {% endif %}
+        </ul>
+
         <ul class="navbar-nav ms-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="#">Serviços</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Profissionais</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Meus Agendamentos</a>
-          </li>
+          {% if user.is_authenticated %}
+            <li class="nav-item">
+              <span class="navbar-text">Bem-vindo, {{ user.get_full_name|default:user.username }}!</span>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'web:logout' %}">Sair</a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'web:cliente-registrar' %}">Registrar</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'web:login' %}">Login</a>
+            </li>
+          {% endif %}
         </ul>
       </div>
     </div>
@@ -39,5 +84,14 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', (event) => {
+          console.log('Clicked link to:', event.target.href);
+        });
+      });
+    });
+  </script>
 </body>
 </html>

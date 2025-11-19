@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Agendar {{ servico.nome }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Agendar Serviço: {{ servico.nome }}</h2>
+    <p>{{ servico.descricao }}</p>
+    <p><strong>Duração:</strong> {{ servico.duracao_minutos }} minutos</p>
+    <p><strong>Preço:</strong> R$ {{ servico.preco }}</p>
+    
+    <h3>Escolha um Profissional</h3>
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="profissional">Profissional</label>
+            <select name="profissional" id="profissional" class="form-control" required>
+                <option value="">Selecione um profissional</option>
+                {% for profissional in profissionais %}
+                    <option value="{{ profissional.id }}">{{ profissional.nome }} - {{ profissional.especialidade }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="data_hora">Data e Hora</label>
+            <input type="datetime-local" name="data_hora" id="data_hora" class="form-control" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Agendar</button>
+        <a href="{% url 'web:servico-list' %}" class="btn btn-secondary">Voltar</a>
+    </form>
+</div>
+{% endblock %}

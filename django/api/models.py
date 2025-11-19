@@ -6,20 +6,23 @@ class Usuario(AbstractUser):
         ('cliente', 'Cliente'),
         ('admin', 'Admin'),
     )
-    # O Django já fornece: username, first_name, last_name, email, password, is_staff, is_active, etc.
-    # Usaremos 'first_name' para o 'nome' do usuário.
-    # O campo 'username' é obrigatório por padrão.
+
+    # Remove the original username field
+    username = None
     
+    # Set email as the unique identifier
+    email = models.EmailField('email address', unique=True)
+    
+    # Add custom fields
     telefone = models.CharField(max_length=20, blank=True, null=True)
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='cliente')
 
-    # Se você quiser usar o email como principal forma de login, descomente as linhas abaixo
-    # e ajuste o serializer e as views de acordo.
-    # USERNAME_FIELD = 'email'
-    # REQUIRED_FIELDS = ['username', 'first_name']
+    # Use email as the username field
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name'] # first_name is inherited from AbstractUser
 
     def __str__(self):
-        return self.get_full_name() or self.username
+        return self.email
 
     class Meta:
         db_table = 'usuarios'
@@ -29,6 +32,8 @@ class Servico(models.Model):
     nome = models.CharField(max_length=255)
     descricao = models.TextField(blank=True, null=True)
     duracao_minutos = models.IntegerField()
+    preco = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
     def __str__(self):
         return self.nome
 

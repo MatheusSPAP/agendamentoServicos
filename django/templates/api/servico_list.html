@@ -15,7 +15,9 @@
           <p class="mb-1">{{ servico.descricao }}</p>
           <small>Duração: {{ servico.duracao_minutos }} minutos</small>
         </div>
-        <span class="badge bg-primary rounded-pill fs-6">R$ {{ servico.preco|stringformat:".2f" }}</span>
+        {% if servico.preco %}
+          <span class="badge bg-primary rounded-pill fs-6">R$ {{ servico.preco|stringformat:".2f" }}</span>
+        {% endif %}
       </div>
     {% empty %}
       <div class="list-group-item">

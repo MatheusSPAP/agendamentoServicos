@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Agendamento{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Agendamento</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="{{ form.servico.id_for_label }}">Serviço</label>
+            {{ form.servico }}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.profissional.id_for_label }}">Profissional</label>
+            {{ form.profissional }}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.data_hora.id_for_label }}">Data e Hora</label>
+            {{ form.data_hora }}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.status.id_for_label }}">Status</label>
+            <select name="status" class="form-control">
+                <option value="agendado" {% if agendamento.status == 'agendado' %}selected{% endif %}>Agendado</option>
+                <option value="cancelado" {% if agendamento.status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                <option value="concluido" {% if agendamento.status == 'concluido' %}selected{% endif %}>Concluído</option>
+            </select>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Atualizar</button>
+        <a href="{% url 'web:admin-agendamentos' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

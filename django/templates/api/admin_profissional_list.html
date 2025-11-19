@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Profissionais - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="h3 mb-0">Gerenciar Profissionais</h1>
+      <a href="#" class="btn btn-primary">Adicionar Profissional</a>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2 class="h5 mb-0">Lista de Profissionais</h2>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Especialidade</th>
+          <th>Serviços Associados</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for profissional in profissionais %}
+          <tr>
+            <td>{{ profissional.id }}</td>
+            <td>{{ profissional.nome }}</td>
+            <td>{{ profissional.especialidade }}</td>
+            <td>
+              {% for servico in profissional.servicos.all %}
+                <span class="badge bg-secondary">{{ servico.nome }}</span>
+              {% empty %}
+                <span class="text-muted">Nenhum</span>
+              {% endfor %}
+            </td>
+            <td>
+              <a href="#" class="btn btn-sm btn-outline-primary">Editar</a>
+              <a href="#" class="btn btn-sm btn-outline-danger">Excluir</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted">Nenhum profissional cadastrado.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

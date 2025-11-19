@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Horários Disponíveis - {{ profissional.nome }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Horários Disponíveis para {{ profissional.nome }}</h2>
+    <p>Especialidade: {{ profissional.especialidade }}</p>
+
+    <h3>Horários de Trabalho</h3>
+    {% for horario in horarios_trabalho %}
+        <p>{{ horario.get_dia_semana_display }}: {{ horario.hora_inicio|time:"H:i" }} - {{ horario.hora_fim|time:"H:i" }}</p>
+    {% endfor %}
+
+    <h3>Próximos Dias</h3>
+    {% for data in datas %}
+        <h4>{{ data.strftime('%d/%m/%Y') }} ({{ data|date:"l" }})</h4>
+        {% for horario in horarios_trabalho %}
+            {% if horario.dia_semana == data|date:"l"|lower|slice:":3" or
+                  horario.dia_semana == data|date:"l"|lower %}
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h5 class="card-title">Horários Disponíveis</h5>
+                        <!-- Horários fixos das 9h às 17h -->
+                        {% if horario.hora_inicio|time:"H:i" <= "09:00" and horario.hora_fim|time:"H:i" > "09:00" %}
+                            {% with horario_completo=data|date:"Y-m-d"|add:"T"|add:"09:00" %}
+                                <button class="btn btn-success btn-sm m-1" onclick="selecionarHorario('{{ horario_completo }}')">
+                                    09:00
+                                </button>
+                            {% endwith %}
+                        {% endif %}
+                        {% if horario.hora_inicio|time:"H:i" <= "10:00" and horario.hora_fim|time:"H:i" > "10:00" %}
+                            {% with horario_completo=data|date:"Y-m-d"|add:"T"|add:"10:00" %}
+                                <button class="btn btn-success btn-sm m-1" onclick="selecionarHorario('{{ horario_completo }}')">
+                                    10:00
+                                </button>
+                            {% endwith %}
+                        {% endif %}
+                        {% if horario.hora_inicio|time:"H:i" <= "11:00" and horario.hora_fim|time:"H:i" > "11:00" %}
+                            {% with horario_completo=data|date:"Y-m-d"|add:"T"|add:"11:00" %}
+                                <button class="btn btn-success btn-sm m-1" onclick="selecionarHorario('{{ horario_completo }}')">
+                                    11:00
+                                </button>
+                            {% endwith %}
+                        {% endif %}
+                        {% if horario.hora_inicio|time:"H:i" <= "12:00" and horario.hora_fim|time:"H:i" > "12:00" %}
+                            {% with horario_completo=data|date:"Y-m-d"|add:"T"|add:"12:00" %}
+                                <button class="btn btn-success btn-sm m-1" onclick="selecionarHorario('{{ horario_completo }}')">
+                                    12:00
+                                </button>
+                            {% endwith %}
+                        {% endif %}
+                        {% if horario.hora_inicio|time:"H:i" <= "13:00" and horario.hora_fim|time:"H:i" > "13:00" %}
+                            {% with horario_completo=data|date:"Y-m-d"|add:"T"|add:"13:00" %}
+                                <button class="btn btn-success btn-sm m-1" onclick="selecionarHorario('{{ horario_completo }}')">
+                                    13:00
+                                </button>
+                            {% endwith %}
+                        {% endif %}
+                        {% if horario.hora_inicio|time:"H:i" <= "14:00" and horario.hora_fim|time:"H:i" > "14:00" %}
+                            {% with horario_completo=data|date:"Y-m-d"|add:"T"|add:"14:00" %}
+                                <button class="btn btn-success btn-sm m-1" onclick="selecionarHorario('{{ horario_completo }}')">
+                                    14:00
+                                </button>
+                            {% endwith %}
+                        {% endif %}
+                        {% if horario.hora_inicio|time:"H:i" <= "15:00" and horario.hora_fim|time:"H:i" > "15:00" %}
+                            {% with horario_completo=data|date:"Y-m-d"|add:"T"|add:"15:00" %}
+                                <button class="btn btn-success btn-sm m-1" onclick="selecionarHorario('{{ horario_completo }}')">
+                                    15:00
+                                </button>
+                            {% endwith %}
+                        {% endif %}
+                        {% if horario.hora_inicio|time:"H:i" <= "16:00" and horario.hora_fim|time:"H:i" > "16:00" %}
+                            {% with horario_completo=data|date:"Y-m-d"|add:"T"|add:"16:00" %}
+                                <button class="btn btn-success btn-sm m-1" onclick="selecionarHorario('{{ horario_completo }}')">
+                                    16:00
+                                </button>
+                            {% endwith %}
+                        {% endif %}
+                        {% if horario.hora_inicio|time:"H:i" <= "17:00" and horario.hora_fim|time:"H:i" > "17:00" %}
+                            {% with horario_completo=data|date:"Y-m-d"|add:"T"|add:"17:00" %}
+                                <button class="btn btn-success btn-sm m-1" onclick="selecionarHorario('{{ horario_completo }}')">
+                                    17:00
+                                </button>
+                            {% endwith %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+
+    <form id="agendarForm" method="post" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" id="data_hora_input" name="data_hora" value="">
+        <button type="submit" class="btn btn-primary">Confirmar Agendamento</button>
+        <a href="{% url 'web:servico-list' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<script>
+function selecionarHorario(horario) {
+    document.getElementById('data_hora_input').value = horario;
+    document.getElementById('agendarForm').style.display = 'block';
+}
+</script>
+{% endblock %}
