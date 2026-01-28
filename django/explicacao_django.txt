@@ -1,0 +1,118 @@
+# Documentação da Aplicação Django - Agendamento de Serviços
+
+Este documento detalha a estrutura e o funcionamento da aplicação de agendamento de serviços construída com o framework Django.
+
+## 1. Visão Geral
+
+A aplicação permite que clientes se cadastrem, vejam os serviços e profissionais disponíveis e agendem horários. Possui também uma área administrativa para gerenciar profissionais, serviços, e visualizar todos os agendamentos.
+
+A aplicação é dividida em duas partes principais:
+1.  **API RESTful (usando Django Rest Framework):** Fornece endpoints para interagir programaticamente com os dados do sistema (usuários, serviços, agendamentos, etc.).
+2.  **Interface Web (renderizada pelo servidor):** Permite que usuários (clientes e administradores) interajam com o sistema através de um navegador.
+
+---
+
+## 2. Estrutura de Pastas
+
+A aplicação Django está contida no diretório `django/`. As partes mais importantes são:
+
+- **`manage.py`**: O script principal para gerenciar a aplicação (rodar o servidor, criar migrações, etc.).
+- **`venv/`**: O ambiente virtual Python com todas as dependências do projeto.
+- **`backend_config/`**: O diretório de configuração do projeto Django.
+- **`api/`**: O diretório da "app" principal do Django, onde a maior parte da lógica de negócio reside.
+- **`templates/`**: Contém os templates HTML base que são estendidos por outras páginas.
+
+---
+
+## 3. Configurações (`backend_config/`)
+
+- **`settings.py`**: Arquivo de configuração principal.
+    - **`SECRET_KEY`**: Chave de segurança do Django.
+    - **`DEBUG`**: Atualmente como `True`, o que é bom para desenvolvimento, mas deve ser `False` em produção.
+    - **`ALLOWED_HOSTS`**: Lista de domínios permitidos.
+    - **`INSTALLED_APPS`**: Registra as apps do Django. Inclui as apps padrão, `rest_framework` (para a API), e a nossa app principal `api`.
+    - **`DATABASES`**: Configuração do banco de dados. Atualmente aponta para um MySQL local chamado `agendamento_servicos` com usuário `root` e senha `tius`.
+    - **`AUTH_USER_MODEL`**: Define nosso modelo customizado `api.Usuario` como o modelo de usuário padrão.
+    - **`LOGIN_URL` e `LOGIN_REDIRECT_URL`**: Define as URLs para o fluxo de login.
+
+- **`urls.py`**: O arquivo de URLs raiz do projeto. Ele direciona as requisições para os arquivos de URL das apps.
+    - `/api/` -> Rotas da API REST (definidas em `api/urls.py`).
+    - `/` (raiz) -> Rotas da interface web (definidas em `api/urls_web.py`).
+
+---
+
+## 4. Modelos de Dados (`api/models.py`)
+
+Os modelos representam as tabelas do banco de dados.
+
+- **`Usuario`**: Modelo de usuário customizado que herda de `AbstractUser`. Contém campos padrão (email, nome, etc.) e um campo adicional `tipo` ('cliente' ou 'admin') para controle de permissões.
+- **`Servico`**: Representa um serviço oferecido, com campos como `nome`, `descricao`, `preco` e `duracao_minutos`.
+- **`Profissional`**: Representa um profissional que realiza os serviços.
+- **`ProfissionalServico`**: Tabela de ligação que define quais serviços um profissional pode realizar.
+- **`HorarioTrabalho`**: Define os dias e horários de trabalho de um profissional.
+- **`Agendamento`**: O modelo principal que representa um agendamento feito. Ele relaciona um `cliente`, `profissional` e `servico`, e armazena a `data_hora_inicio`, `data_hora_fim` e o `status` ('agendado', 'cancelado', 'concluido').
+
+---
+
+## 5. URLs e Views (A Lógica da Aplicação)
+
+### a) Interface Web (`api/urls_web.py`)
+
+Este arquivo mapeia as URLs da interface web para as funções em `views_web.py`, `views_auth.py` e `views_agendamento.py`.
+
+- **Autenticação (`views_auth.py`):**
+    - `login_view`: Controla a tela de login.
+    - `logout_view`: Realiza o logout do usuário.
+
+- **Páginas Gerais (`views_web.py`):**
+    - `home`: Página inicial.
+    - `cliente_registration_view`: Página de cadastro de novos clientes.
+    - `servico_list_view` e `profissional_list_view`: Listam os serviços e profissionais.
+    - **Dashboards:**
+        - `admin_dashboard_view`: Painel de controle do administrador.
+        - `cliente_agendamento_list`: Painel do cliente para ver seus agendamentos.
+    - **Listas do Admin:** `admin_servico_list`, `admin_profissional_list`, `admin_agendamento_list`.
+
+- **Lógica de Agendamento (`views_agendamento.py`):**
+    - **`agendar_servico`**: A view inicial do fluxo, onde o cliente escolhe a data.
+    - **`horarios_disponiveis`**: O coração da lógica de agendamento. Esta view:
+        1.  Calcula todos os horários de trabalho do profissional para um determinado dia.
+        2.  Busca todos os agendamentos já existentes (`status='agendado'`) para aquele dia.
+        3.  Gera uma lista de todos os "slots" de tempo disponíveis, levando em conta a duração do serviço e os horários já ocupados.
+        4.  Quando um horário é selecionado (via método POST), ela cria o novo `Agendamento` no banco de dados.
+    - **`cancelar_agendamento`**: Permite que um cliente cancele um agendamento.
+
+### b) API REST (`api/urls.py` e `api/views.py`)
+
+- **`views.py`**: Contém as `ViewSets` que definem o comportamento da API (listar, criar, editar, deletar).
+    - `UsuarioViewSet`: Endpoint para gerenciar usuários.
+    - `ServicoViewSet`: Endpoint para serviços.
+    - `ProfissionalViewSet`: Endpoint para profissionais.
+    - `AgendamentoViewSet`: Endpoint para agendamentos.
+- **Permissões Customizadas (`IsAdminUser`, `IsOwnerOrAdmin`):** Garantem que apenas administradores possam realizar certas ações e que clientes só possam modificar seus próprios dados.
+
+---
+
+## 6. Templates (HTML)
+
+- **`templates/base.html`**: O template principal da aplicação. Define a estrutura base (cabeçalho, rodapé, navegação) que as outras páginas herdam.
+- **`templates/api/*.html`**: Contém as páginas da interface web, como as listas de serviços, profissionais e os dashboards.
+- **`api/templates/api/*.html`**: Templates específicos do fluxo de agendamento, como `agendar_servico.html` e `horarios_disponiveis.html`.
+
+---
+
+## 7. Como Executar a Aplicação
+
+Para iniciar a aplicação, execute os seguintes comandos a partir do diretório raiz do projeto (`C:\Users\mathe\Documents\Programação\agendamentoServicos\`):
+
+**1. Ative o ambiente virtual (usando PowerShell):**
+```powershell
+.\django\venv\Scripts\Activate.ps1
+```
+
+**2. Inicie o servidor de desenvolvimento Django:**
+```bash
+python .\django\manage.py runserver
+```
+
+A aplicação estará disponível em `http://127.0.0.1:8000/` no seu navegador.

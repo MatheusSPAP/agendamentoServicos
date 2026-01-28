@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Acesso Negado{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Acesso Negado!</h4>
+        <p>Desculpe, só admin podem acessar essa pagina.</p>
+    </div>
+    <a href="{% url 'web:servico-list' %}" class="btn btn-primary mt-3">Voltar à Página Inicial</a>
+</div>
+{% endblock %}

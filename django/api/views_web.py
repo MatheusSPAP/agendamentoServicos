@@ -1,12 +1,24 @@
+from django.contrib.auth.mixins import AccessMixin
 from django.views.generic import ListView
 from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth import login
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.contrib.admin.views.decorators import staff_member_required
 from .models import Servico, Profissional, Agendamento, Usuario
 from .forms import ClienteRegistrationForm
+
+# Mixin para verificar se o usuário é um administrador (staff)
+class AdminRequiredMixin(AccessMixin):
+    """Garante que o usuário logado seja um membro da equipe (staff)."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not request.user.is_staff:
+            # Renderiza uma página de acesso negado para não-staff
+            return render(request, 'api/admin_only.html', status=403)
+        return super().dispatch(request, *args, **kwargs)
 
 class ClienteRegistrationView(View):
     def get(self, request):
@@ -18,8 +30,7 @@ class ClienteRegistrationView(View):
         if form.is_valid():
             usuario = form.save()
             # Fazer login com o usuário do Django
-            user_django = usuario
-            login(request, user_django)
+            login(request, usuario)
             return redirect('web:servico-list')
         return render(request, 'api/cliente_registration.html', {'form': form})
 
@@ -34,9 +45,8 @@ class ProfissionalListView(ListView):
     template_name = 'api/profissional_list.html'
     context_object_name = 'profissionais'
 
-# Views para administradores
-@method_decorator(staff_member_required, name='dispatch')
-class AdminDashboardView(View):
+# Views para administradores com a nova Mixin
+class AdminDashboardView(AdminRequiredMixin, View):
     def get(self, request):
         # Contadores para o painel de administração
         total_servicos = Servico.objects.count()
@@ -53,20 +63,17 @@ class AdminDashboardView(View):
         }
         return render(request, 'api/admin_dashboard.html', context)
 
-@method_decorator(staff_member_required, name='dispatch')
-class AdminServicoListView(ListView):
+class AdminServicoListView(AdminRequiredMixin, ListView):
     model = Servico
     template_name = 'api/admin_servico_list.html'
     context_object_name = 'servicos'
 
-@method_decorator(staff_member_required, name='dispatch')
-class AdminProfissionalListView(ListView):
+class AdminProfissionalListView(AdminRequiredMixin, ListView):
     model = Profissional
     template_name = 'api/admin_profissional_list.html'
     context_object_name = 'profissionais'
 
-@method_decorator(staff_member_required, name='dispatch')
-class AdminAgendamentoListView(ListView):
+class AdminAgendamentoListView(AdminRequiredMixin, ListView):
     model = Agendamento
     template_name = 'api/admin_agendamento_list.html'
     context_object_name = 'agendamentos'

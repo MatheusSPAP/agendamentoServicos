@@ -15,9 +15,14 @@
           <p class="mb-1">{{ servico.descricao }}</p>
           <small>Duração: {{ servico.duracao_minutos }} minutos</small>
         </div>
-        {% if servico.preco %}
-          <span class="badge bg-primary rounded-pill fs-6">R$ {{ servico.preco|stringformat:".2f" }}</span>
-        {% endif %}
+        <div class="ms-auto d-flex align-items-center">
+          {% if servico.preco %}
+            <span class="badge bg-primary rounded-pill fs-6 me-3">R$ {{ servico.preco|stringformat:".2f" }}</span>
+          {% endif %}
+          {% if user.is_authenticated %}
+            <a href="{% url 'web:agendar-servico' servico.id %}" class="btn btn-success btn-sm">Agendar</a>
+          {% endif %}
+        </div>
       </div>
     {% empty %}
       <div class="list-group-item">

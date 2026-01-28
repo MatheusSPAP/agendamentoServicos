@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Cancelar Agendamento - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h1 class="h3 mb-0">Cancelar Agendamento</h1>
+  </div>
+  <div class="card-body">
+    <p>Você tem certeza que deseja cancelar o seguinte agendamento?</p>
+    <ul>
+      <li><strong>Serviço:</strong> {{ agendamento.servico.nome }}</li>
+      <li><strong>Profissional:</strong> {{ agendamento.profissional.nome }}</li>
+      <li><strong>Data e Hora:</strong> {{ agendamento.data_hora|date:"d/m/Y H:i" }}</li>
+    </ul>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Confirmar Cancelamento</button>
+      <a href="{% url 'web:cliente-agendamentos' %}" class="btn btn-secondary">Voltar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

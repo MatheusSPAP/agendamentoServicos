@@ -14,7 +14,8 @@ from .views_agendamento import (
     agendar_servico,
     horarios_disponiveis,
     AgendamentoUpdateView,
-    AgendamentoDeleteView
+    AgendamentoDeleteView,
+    cancelar_agendamento_cliente
 )
 from .views_auth import LoginView, LogoutView
 
@@ -30,11 +31,13 @@ urlpatterns = [
     path('profissionais/', ProfissionalListView.as_view(), name='profissional-list'),
     path('registrar/', ClienteRegistrationView.as_view(), name='cliente-registrar'),
     path('meus-agendamentos/', ClienteAgendamentoListView.as_view(), name='cliente-agendamentos'),
+    path('meus-agendamentos/<int:agendamento_id>/cancelar/', 
+         cancelar_agendamento_cliente, name='cliente-agendamento-cancelar'),
 
     # URLs para agendamento
     path('agendar/', AgendamentoCreateView.as_view(), name='agendar'),
     path('agendar/<int:servico_id>/', agendar_servico, name='agendar-servico'),
-    path('horarios-disponiveis/<int:profissional_id>/', horarios_disponiveis, name='horarios-disponiveis'),
+    path('agendar/<int:servico_id>/<int:profissional_id>/horarios/', horarios_disponiveis, name='horarios-disponiveis'),
 
     # URLs para administradores (acesso restrito)
     path('admin/', AdminDashboardView.as_view(), name='admin-dashboard'),
